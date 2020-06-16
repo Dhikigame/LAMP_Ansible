@@ -1,0 +1,5 @@
+---
+- include: /Users/daiki/ansible/roles/lamp/tasks/install_httpd.yml
+- include: /Users/daiki/ansible/roles/lamp/tasks/install_php.yml
+- include: /Users/daiki/ansible/roles/lamp/tasks/install_mysql.yml
+- include: /Users/daiki/ansible/roles/lamp/tasks/install_phpmyadmin.yml

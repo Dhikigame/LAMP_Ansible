@@ -1,0 +1,8 @@
+---
+
+- name: install configure of httpd php mysql phpmyadmin
+  hosts: nicosearch
+  remote_user: root
+
+  roles:
+    - lamp

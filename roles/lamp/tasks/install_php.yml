@@ -1,0 +1,45 @@
+---
+# - name: remi insert
+#   command: rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+
+- name: install php
+  yum: name={{ item }} state=installed enablerepo=remi-php71
+  with_items:
+    - php
+    - php-common
+    - php-fpm
+    - php-mbstring
+    - php-mysql
+    - php-enchant
+    - php-process
+    - php-xml
+    - php-mysqlnd
+    - php-pdo
+    - php-gd
+    - php-zip
+    - https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+
+- name: php.ini backup
+  command: cp /etc/php.ini /etc/php.ini.org
+
+- name: php config
+  lineinfile: >-
+    dest='/etc/php.ini'
+    state=present
+    backrefs=yes
+    regexp='{{ item.regexp }}'
+    line='{{ item.line }}'
+  with_items:
+    - {regexp: '^#?\s*;error_logs', line: 'error_logs = /var/log/php_errors.log'}
+    - {regexp: '^#?\s*;mbstring.language', line: 'mbstring.language = Japanese'}
+    - {regexp: '^#?\s*;mbstring.internal_encoding', line: 'mbstring.internal_encoding = UTF-8'}
+    - {regexp: '^#?\s*;mbstring.http_input', line: 'mbstring.http_input = auto'}
+    - {regexp: '^#?\s*;mbstring.detect_order', line: 'mbstring.detect_order = auto'}
+    - {regexp: '^#?\s*expose_php', line: 'expose_php = off'}
+    - {regexp: '^#?\s*;date.timezone', line: 'date.timezone = Asia/Tokyo'}
+
+- name: httpd restart
+  command: systemctl restart httpd
+
+- name: network restart
+  command: systemctl restart network

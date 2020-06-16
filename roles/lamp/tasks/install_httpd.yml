@@ -1,0 +1,28 @@
+---
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: install httpd
+  yum: name=httpd state=installed
+
+- name: chkconfig httpd on
+  service: name=httpd state=started enabled=yes
+
+- name: httpd.conf backup
+  command: cp -p /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.org
+
+- name: httpd config
+  lineinfile: >-
+    dest='/etc/httpd/conf/httpd.conf'
+    state=present
+    backrefs=yes
+    regexp='{{ item.regexp }}'
+    line='{{ item.line }}'
+  with_items:
+    - regexp: '^#?\s*ServerTokens'
+      line: 'ServerTokens Prod'
+    - regexp: '^#?\s*ServerSignature'
+      line: 'ServerSignature Off'
+
+- name: httpd restart
+  command: systemctl restart httpd

@@ -1,0 +1,36 @@
+---
+- name: install mysql57 rpm
+  command: yum -y localinstall http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
+
+- name: install mysql57
+  command: yum -y install mysql-community-server
+
+- name: chkconfig mysqld on
+  service: name=mysqld state=started enabled=yes
+
+- name: mysqld start
+  command: systemctl start mysqld.service
+
+- name: my.cnf backup
+  command: cp /etc/my.cnf /etc/my.cnf.org
+
+- name: my.cnf permit
+  file: path=/etc/my.cnf mode=0644
+
+#- name: .my.cnf remote copy
+#  template: src=.my.cnf dest=/root/.my.cnf owner=root mode=0600
+
+- name: my.conf config
+  lineinfile: >-
+    dest='/etc/php.ini'
+    state=present
+    backrefs=yes
+    regexp='{{ item.regexp }}'
+    line='{{ item.line }}'
+  with_items:
+    - {regexp: '^#?\s*pdo_mysql.default_socket=', line: 'pdo_mysql.default_socket = /var/lib/mysql/mysql.sock'}
+    - {regexp: '^#?\s*mysql.default_socket =', line: 'mysql.default_socket = /var/lib/mysql/mysql.sock'}
+    - {regexp: '^#?\s*mysqli.default_socket =', line: 'mysqli.default_socket = /var/lib/mysql/mysql.sock'}
+
+- name: mysql restart
+  command: systemctl restart mysqld

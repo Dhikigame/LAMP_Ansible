@@ -1,0 +1,79 @@
+---
+- name: remi repogitory enable
+  command: yum-config-manager --enable remi
+
+- name: install phpmyadmin
+  yum: name=phpMyAdmin disablerepo=remi enablerepo=remi-php71 state=installed
+
+- name: phpMyAdmin.conf backup
+  command: cp -p /etc/httpd/conf.d/phpMyAdmin.conf /etc/httpd/conf.d/phpMyAdmin.conf.org
+
+- name: phpMyAdmin.conf Alias comentout config
+  lineinfile: >-
+    dest='/etc/httpd/conf.d/phpMyAdmin.conf'
+    state=present
+    backrefs=yes
+    regexp='{{ item.regexp }}'
+    line='{{ item.line }}'
+  with_items:
+    - {regexp: '^#?\s*Alias /phpMyAdmin /usr/share/phpMyAdmin', line: '#Alias /phpMyAdmin /usr/share/phpMyAdmin'}
+    - {regexp: '^#?\s*Alias /phpmyadmin /usr/share/phpMyAdmin', line: '#Alias /phpmyadmin /usr/share/phpMyAdmin'}
+
+- name: phpMyAdmin.conf Alias config
+  lineinfile: >-
+    dest='/etc/httpd/conf.d/phpMyAdmin.conf'
+    state=present
+    backrefs=yes
+    regexp='{{ item.regexp }}'
+    line='{{ item.line }}'
+  with_items:
+    - regexp: '^#?\s*#Alias /phpMyAdmin /usr/share/phpMyAdmin'
+      line: 'Alias /vf2a368c7tiNp4kefnd2YxZieMfSFXAB95rbExZ8pKysfKCm /usr/share/phpMyAdmin'
+
+- name: install mod_ssl
+  yum: name=mod_ssl state=installed
+
+- name: phpMyAdmin.conf https config
+  lineinfile: >-
+    dest='/etc/httpd/conf.d/phpMyAdmin.conf'
+    state=present
+    insertafter='{{ item.insertafter }}'
+    line='{{ item.line }}'
+  with_items:
+    - insertafter: '^#?\s*AddDefaultCharset UTF-8'
+      line: '   SSLRequireSSL'
+
+- name: phpMyAdmin.conf Require all granted config
+  lineinfile: >-
+    dest='/etc/httpd/conf.d/phpMyAdmin.conf'
+    state=present
+    insertafter='{{ item.insertafter }}'
+    line='{{ item.line }}'
+  with_items:
+    - insertafter: '^#?\s*   SSLRequireSSL'
+      line: '   Require all granted'
+
+- name: phpMyAdmin.conf AllowOverride all config
+  lineinfile: >-
+    dest='/etc/httpd/conf.d/phpMyAdmin.conf'
+    state=present
+    insertafter='{{ item.insertafter }}'
+    line='{{ item.line }}'
+  with_items:
+    - insertafter: '^#?\s*   Require all granted'
+      line: '   AllowOverride all'
+
+- name: systemctl restart firewalld
+  command: systemctl restart firewalld
+
+- name: firewall-cmd http enable
+  command: firewall-cmd --add-service=http --permanent
+
+- name: firewall-cmd https enable
+  command: firewall-cmd --add-service=https --permanent
+
+- name: firewall-cmd reload
+  command: firewall-cmd --reload
+
+- name: httpd restart
+  command: systemctl restart httpd
